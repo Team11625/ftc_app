@@ -41,6 +41,7 @@ public class TeamTankDrive extends OpMode {
 
             rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             arm = hardwareMap.get(DcMotor.class, "arm");
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
