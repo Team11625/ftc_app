@@ -48,6 +48,7 @@ public class TeamRightAuto extends OpMode {
         }
     }
 
+    @Override
     public void loop(){
 
 
@@ -111,6 +112,8 @@ public class TeamRightAuto extends OpMode {
         runtime.reset();
 
     }
+
+    @Override
     public void stop(){
 
     }

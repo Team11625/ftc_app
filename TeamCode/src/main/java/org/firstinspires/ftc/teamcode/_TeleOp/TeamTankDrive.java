@@ -137,41 +137,25 @@ public class TeamTankDrive extends OpMode {
             leftfrontDrive.setPower(left);
             leftbackDrive.setPower(left);
 
-            if (rightBumper1 == true) {
-                armActivator.setPower(1);
+            if (rightBumper1 == true || rightBumper2 == true) {
+                armActivator.setPower(.5);
             }
-            else if (leftBumper1 == true) {
+            else if (leftBumper1 == true || leftBumper2 == true) {
                 armActivator.setPower(-1);
             }
             else{
                 armActivator.setPower(0);
             }
 
-            if (rightTrigger1 > 0) {
+            if (rightTrigger1 > 0 || rightTrigger2 > 0) {
                 arm.setPower(rightTrigger1);
             }
-            else if (leftTrigger1 > 0) {
+            else if (leftTrigger1 > 0 || leftTrigger2 > 0) {
                 arm.setPower(-leftTrigger1);
             }
             else{
                 arm.setPower(0);
             }
-
-			/*
-			if(rightBumper2 == true){
-				armActivator.setPower(.1);
-			}
-
-			else if(leftBumper2 == true){
-				armActivator.setPower(-.1);
-			}
-
-			if(rightTrigger2 > 0){
-				arm.setPower(rightTrigger2);
-			}
-			else if(leftTrigger2 > 0){
-				arm.setPower(-rightTrigger2);
-			} */
         }
 
         /*
