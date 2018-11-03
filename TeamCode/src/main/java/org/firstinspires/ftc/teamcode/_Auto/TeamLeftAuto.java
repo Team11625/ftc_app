@@ -61,17 +61,16 @@ public class TeamLeftAuto extends OpMode {
             armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-            parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-            parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+            parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+            parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
             parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-            parameters.loggingEnabled      = true;
-            parameters.loggingTag          = "IMU";
+            parameters.loggingEnabled = true;
+            parameters.loggingTag = "IMU";
             parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
             imu = hardwareMap.get(BNO055IMU.class, "imu");
             imu.initialize(parameters);
-        }
-        catch (IllegalArgumentException iax) {
+        } catch (IllegalArgumentException iax) {
             bDebug = true;
         }
     }
@@ -82,16 +81,22 @@ public class TeamLeftAuto extends OpMode {
     }
 
     @Override
-    public void loop(){
+    public void loop() {
 
         final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        double angle = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
+        double angle = Integer.parseInt(formatAngle(angles.angleUnit, angles.firstAngle));
+        double startAngle;
         double targetAngle;
-        double angleDifference;
 
         runtime.reset();
 
-        while(runtime.seconds() < 0.50){ //straight
+        while(runtime.seconds() < 3){ //kill 3 seconds
+
+        }
+
+        runtime.reset();
+
+        while (runtime.seconds() < 0.50) { //straight
 
             leftfrontDrive.setPower(1);
             leftbackDrive.setPower(1);
@@ -99,23 +104,39 @@ public class TeamLeftAuto extends OpMode {
             rightbackDrive.setPower(1);
         }
 
-        targetAngle = angle + 90;
-        if(targetAngle > 180){
-            angleDifference = targetAngle - 180;
-            targetAngle = targetAngle * -1 + angleDifference;
+        runtime.reset();
+
+        startAngle = angle % 360; //clips range from 0 -360
+        if (startAngle > 270) {
+            targetAngle = (startAngle + 87) % 360;
+            while (angle % 360 <= 357) { //turn 90 degrees to the left +- 3 degrees error
+
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(.5);
+            }
+            while (angle % 360 <= targetAngle) { //turn 90 degrees to the left +- 3 degrees error
+
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(.5);
+            }
         }
+        else{
+            while ((angle % 360) - startAngle <= 87) { //turn 90 degrees to the left +- 3 degrees error
 
-        while(angle != targetAngle){ //turn 90 degrees to the left
-
-            leftfrontDrive.setPower(-1);
-            leftbackDrive.setPower(-1);
-            rightfrontDrive.setPower(1);
-            rightbackDrive.setPower(1);
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(.5);
+            }
         }
 
         runtime.reset();
 
-        while(runtime.seconds() < 1.5){ //Straight
+        while (runtime.seconds() < 1.5) { //Straight
 
             leftfrontDrive.setPower(1);
             leftbackDrive.setPower(1);
@@ -123,23 +144,37 @@ public class TeamLeftAuto extends OpMode {
             rightbackDrive.setPower(1);
         }
 
-        targetAngle = angle + 45;
-        if(targetAngle > 180){
-            angleDifference = targetAngle - 180;
-            targetAngle = targetAngle * -1 + angleDifference;
+        startAngle = angle % 360; //clips range from 0 -360
+        if (startAngle > 315) {
+            targetAngle = (startAngle + 42) % 360;
+            while (angle % 360 <= 357) { //turn 45 degrees to the left +- 3 degrees error
+
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(.5);
+            }
+            while (angle % 360 <= targetAngle) { //turn 45 degrees to the left +- 3 degrees error
+
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(.5);
+            }
         }
+        else{
+            while ((angle % 360) - startAngle <= 42) { //turn 45 degrees to the left +- 3 degrees error
 
-        while(angle != targetAngle){ //turn 45 degrees to the left
-
-            leftfrontDrive.setPower(-1);
-            leftbackDrive.setPower(-1);
-            rightfrontDrive.setPower(1);
-            rightbackDrive.setPower(1);
+                leftfrontDrive.setPower(-.5);
+                leftbackDrive.setPower(-.5);
+                rightfrontDrive.setPower(.5);
+                rightbackDrive.setPower(5.);
+            }
         }
 
         runtime.reset();
 
-        while(runtime.seconds() < 2){ //Backwards
+        while (runtime.seconds() < 2) { //Backwards
 
             leftfrontDrive.setPower(-1);
             leftbackDrive.setPower(-1);
@@ -151,25 +186,38 @@ public class TeamLeftAuto extends OpMode {
 
         runtime.reset();
 
-        while(runtime.seconds() < 1){
+        while (runtime.seconds() < 1) {
 
         }
 
         markerArm.setPosition(0);
 
         runtime.reset();
+
+        while (runtime.seconds() < 1) { //straight
+
+            leftfrontDrive.setPower(1);
+            leftbackDrive.setPower(1);
+            rightfrontDrive.setPower(1);
+            rightbackDrive.setPower(1);
+        }
+
+        telemetry.addLine()
+                .addData("status", imu.getSystemStatus().toShortString())
+                .addData("calib", imu.getCalibrationStatus().toString())
+                .addData("heading", formatAngle(angles.angleUnit, angles.firstAngle));
     }
 
     @Override
-    public void stop(){
+    public void stop () {
 
     }
 
-    String formatAngle(AngleUnit angleUnit, double angle) {
+    String formatAngle (AngleUnit angleUnit,double angle){
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
 
-    String formatDegrees(double degrees){
+    String formatDegrees ( double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 }
