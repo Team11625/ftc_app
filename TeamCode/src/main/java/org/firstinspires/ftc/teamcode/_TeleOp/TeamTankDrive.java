@@ -31,7 +31,8 @@ public class TeamTankDrive extends OpMode {
     private DcMotor rightbackDrive = null;
 
     private DcMotor arm = null; //the arm that captures the blocks and balls, controlled by left hand motor
-    private DcMotor armActivator = null;
+    private DcMotor armActivatorLeft = null;
+    private DcMotor armActivatorRight = null;
 
     private BNO055IMU imu;
 
@@ -60,8 +61,11 @@ public class TeamTankDrive extends OpMode {
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             arm.setDirection(DcMotor.Direction.REVERSE);
 
-            armActivator = hardwareMap.get(DcMotor.class, "armActivator");
-            armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
+            armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
+            armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
             parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -167,13 +171,12 @@ public class TeamTankDrive extends OpMode {
             leftbackDrive.setPower(left);
 
             if (rightBumper1 == true || rightBumper2 == true) {
-                armActivator.setPower(.4);
+                armActivatorLeft.setPower(.4);
+                armActivatorRight.setPower(.4);
             }
             else if (leftBumper1 == true || leftBumper2 == true) {
-                armActivator.setPower(-1);
-            }
-            else{
-                armActivator.setPower(0);
+                armActivatorLeft.setPower(-1);
+                armActivatorRight.setPower(-1);
             }
 
             if (rightTrigger1 > 0 || rightTrigger2 > 0) {
@@ -215,7 +218,6 @@ public class TeamTankDrive extends OpMode {
                 .addData("calib", imu.getCalibrationStatus().toString())
                 .addData("heading", Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) % 360);
     }
-
     /*
      * Code to run when the op mode is first disabled goes here
      *
