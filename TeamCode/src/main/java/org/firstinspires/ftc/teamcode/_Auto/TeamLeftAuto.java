@@ -21,7 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import java.util.Locale;
 
 @Autonomous(name="TeamLeftAuto", group="Autonomous")
-public class TeamLeftAuto extends OpMode {
+public class TeamLeftAuto extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -37,8 +37,12 @@ public class TeamLeftAuto extends OpMode {
 
     private BNO055IMU imu;
 
+    double angle;
+    double startAngle;
+    double targetAngle;
+
     @Override
-    public void init() {
+    public void runOpMode() {
 
         try {
             leftfrontDrive = hardwareMap.get(DcMotor.class, "frontLeft");
@@ -57,7 +61,6 @@ public class TeamLeftAuto extends OpMode {
             rightbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
-            markerArm.setPosition(0);
 
             armActivator = hardwareMap.get(DcMotor.class, "armActivator");
             armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -75,98 +78,52 @@ public class TeamLeftAuto extends OpMode {
         } catch (IllegalArgumentException iax) {
             bDebug = true;
         }
-    }
-
-    @Override
-    public void start() {
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        telemetry.addData("heading", Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) % 360);
-    }
-
-    @Override
-    public void loop() {
-
-        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        double angle = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
-        double startAngle;
-        double targetAngle;
 
         runtime.reset();
 
-        while(runtime.seconds() < 3){ //kill 3 seconds
+        while(runtime.seconds() < 3 && opModeIsActive()){ //kill 3 seconds
 
         }
 
         runtime.reset();
 
-        while (runtime.seconds() < 0.35) { //straight
+        while (runtime.seconds() < 0.35 && opModeIsActive()) { //straight
 
-            leftfrontDrive.setPower(1);
-            leftbackDrive.setPower(1);
-            rightfrontDrive.setPower(1);
-            rightbackDrive.setPower(1);
-        }
-
-        runtime.reset();
-
-        startAngle = angle % 360; //clips range from 0 - 360
-
-        targetAngle = ((startAngle + 90) % 360);
-
-        while (/*angle % 360 <= 357*/ true) { //turn 90 degrees to the left +- 3 degrees error
-
-            if(Math.abs(angle % 360 - targetAngle) <= 10){
-                break;
-            }
-
-            leftfrontDrive.setPower(-.5);
-            leftbackDrive.setPower(-.5);
+            leftfrontDrive.setPower(.5);
+            leftbackDrive.setPower(.5);
             rightfrontDrive.setPower(.5);
             rightbackDrive.setPower(.5);
         }
 
+        turn(90.0); //turn 90 degrees to the left
+
         runtime.reset();
 
-        while (runtime.seconds() < 1.5) { //Straight
+        while (runtime.seconds() < 1.65) { //Straight
 
-            leftfrontDrive.setPower(1);
-            leftbackDrive.setPower(1);
-            rightfrontDrive.setPower(1);
-            rightbackDrive.setPower(1);
-        }
-
-        startAngle = angle % 360; //clips range from 0 - 360
-
-        targetAngle = ((startAngle + 45) % 360);
-
-        while (/*angle % 360 <= 357*/ true) { //turn 45 degrees to the left +- 3 degrees error
-
-            if(Math.abs(angle % 360 - targetAngle) <= 10){
-                break;
-            }
-
-            leftfrontDrive.setPower(-.5);
-            leftbackDrive.setPower(-.5);
+            leftfrontDrive.setPower(.5);
+            leftbackDrive.setPower(.5);
             rightfrontDrive.setPower(.5);
             rightbackDrive.setPower(.5);
         }
 
+        turn(32.5); //turn 32.5 degrees to the left
+
         runtime.reset();
 
-        while (runtime.seconds() < 2) { //Backwards
+        while (runtime.seconds() < 1.75) { //Backwards
 
-            leftfrontDrive.setPower(-1);
-            leftbackDrive.setPower(-1);
-            rightfrontDrive.setPower(-1);
-            rightbackDrive.setPower(-1);
+            leftfrontDrive.setPower(-.5);
+            leftbackDrive.setPower(-.5);
+            rightfrontDrive.setPower(-.5);
+            rightbackDrive.setPower(-.5);
         }
 
         markerArm.setPosition(1);
 
         runtime.reset();
 
-        while (runtime.seconds() < 1) {
+        while (runtime.seconds() < 3) {
 
         }
 
@@ -174,7 +131,21 @@ public class TeamLeftAuto extends OpMode {
 
         runtime.reset();
 
-        while (runtime.seconds() < 1) { //straight
+        while (runtime.seconds() < 1) {
+
+        }
+
+        runtime.reset();
+
+        while (runtime.seconds() < 2.5) { //straight on the way to the pit
+
+            leftfrontDrive.setPower(.5);
+            leftbackDrive.setPower(.5);
+            rightfrontDrive.setPower(.5);
+            rightbackDrive.setPower(.5);
+        }
+
+        while (runtime.seconds() < .5) { //straight over the pit
 
             leftfrontDrive.setPower(1);
             leftbackDrive.setPower(1);
@@ -182,15 +153,15 @@ public class TeamLeftAuto extends OpMode {
             rightbackDrive.setPower(1);
         }
 
-        telemetry.addLine()
-                .addData("status", imu.getSystemStatus().toShortString())
-                .addData("calib", imu.getCalibrationStatus().toString())
-                .addData("heading", Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) % 360);
+        requestOpModeStop();
     }
 
-    @Override
-    public void stop () {
-
+    double mod(double a, double b)
+    {
+        double ret = a % b;
+        if (ret < 0)
+            ret += b;
+        return ret;
     }
 
     String formatAngle (AngleUnit angleUnit,double angle){
@@ -199,5 +170,31 @@ public class TeamLeftAuto extends OpMode {
 
     String formatDegrees ( double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+
+    public void turn (double turnAngle){
+        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        angle = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
+
+        startAngle = mod(angle, 360.0); //clips range from 0 - 359
+
+        targetAngle = mod((startAngle + turnAngle), 360.0);
+
+        while(opModeIsActive()){
+
+            if(targetAngle - mod(Double.parseDouble(formatAngle(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).angleUnit, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle)), 360.0) < 3.0) { //3 degree margin of error
+                leftfrontDrive.setPower(0);
+                leftbackDrive.setPower(0);
+                rightfrontDrive.setPower(0);
+                rightbackDrive.setPower(0);
+                break;
+            }
+
+            leftfrontDrive.setPower(-.3);
+            leftbackDrive.setPower(-.3);
+            rightfrontDrive.setPower(.3);
+            rightbackDrive.setPower(.3);
+        }
     }
 }
