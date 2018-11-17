@@ -79,6 +79,8 @@ public class TeamLeftAuto extends LinearOpMode {
             bDebug = true;
         }
 
+        waitForStart();
+
         runtime.reset();
 
         while(runtime.seconds() < 3 && opModeIsActive()){ //kill 3 seconds
