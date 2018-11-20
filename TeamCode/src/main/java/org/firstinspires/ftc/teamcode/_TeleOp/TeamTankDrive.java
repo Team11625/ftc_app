@@ -1,9 +1,22 @@
 package org.firstinspires.ftc.teamcode._TeleOp;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+
+import java.util.Locale;
 
 /**
  * TeleOp Mode
@@ -14,13 +27,20 @@ import com.qualcomm.robotcore.util.Range;
 
 public class TeamTankDrive extends OpMode {
 
+    private ElapsedTime runtime = new ElapsedTime();
+
     private DcMotor leftfrontDrive = null;
     private DcMotor rightfrontDrive = null; //if you see this slap yourself
     private DcMotor leftbackDrive = null;
     private DcMotor rightbackDrive = null;
 
     private DcMotor arm = null; //the arm that captures the blocks and balls, controlled by left hand motor
-    private DcMotor armActivator = null;
+    private DcMotor armActivatorLeft = null;
+    private DcMotor armActivatorRight = null;
+
+    private Servo markerArm;
+
+    private BNO055IMU imu;
 
     boolean bDebug = false;
 
@@ -47,8 +67,25 @@ public class TeamTankDrive extends OpMode {
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             arm.setDirection(DcMotor.Direction.REVERSE);
 
-            armActivator = hardwareMap.get(DcMotor.class, "armActivator");
-            armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
+            armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivatorLeft.setDirection(DcMotor.Direction.REVERSE);
+
+            armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
+            armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            markerArm = hardwareMap.get(Servo.class, "markerArm");
+
+            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+            parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+            parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+            parameters.calibrationDataFile = "BNO055IMUCalibration.json";
+            parameters.loggingEnabled = true;
+            parameters.loggingTag = "IMU";
+            parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+            imu = hardwareMap.get(BNO055IMU.class, "imu");
+            imu.initialize(parameters);
         }
         catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -60,6 +97,11 @@ public class TeamTankDrive extends OpMode {
      *
      * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#run()
      */
+    @Override
+    public void start() {
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+    }
+
     @Override
     public void loop() {
 
@@ -138,13 +180,32 @@ public class TeamTankDrive extends OpMode {
             leftbackDrive.setPower(left);
 
             if (rightBumper1 == true || rightBumper2 == true) {
-                armActivator.setPower(.5);
+                runtime.reset();
+
+                while(runtime.seconds() < .4) {
+                    armActivatorLeft.setPower(.3);
+                    armActivatorRight.setPower(.3);
+                }
+                while(runtime.seconds() < .3) {
+                    armActivatorLeft.setPower(-.3);
+                    armActivatorRight.setPower(-.3);
+                }
+                armActivatorLeft.setPower(0);
+                armActivatorRight.setPower(0);
             }
             else if (leftBumper1 == true || leftBumper2 == true) {
-                armActivator.setPower(-1);
-            }
-            else{
-                armActivator.setPower(0);
+                runtime.reset();
+
+                while(runtime.seconds() < .5) {
+                    armActivatorLeft.setPower(-.5);
+                    armActivatorRight.setPower(-.5);
+                }
+                while(runtime.seconds() < .15) {
+                    armActivatorLeft.setPower(-.1);
+                    armActivatorRight.setPower(-.1);
+                }
+                armActivatorLeft.setPower(0);
+                armActivatorRight.setPower(0);
             }
 
             if (rightTrigger1 > 0 || rightTrigger2 > 0) {
@@ -157,10 +218,10 @@ public class TeamTankDrive extends OpMode {
             }
             else if (leftTrigger1 > 0 || leftTrigger2 > 0) {
                 if(leftTrigger2 > 0){
-                    arm.setPower((leftTrigger2));
+                    arm.setPower((-leftTrigger2));
                 }
                 else{
-                    arm.setPower(leftTrigger1);
+                    arm.setPower(-leftTrigger1);
                 }
             }
             else{
@@ -180,8 +241,12 @@ public class TeamTankDrive extends OpMode {
         telemetry.addData("right pwr", String.format("%.2f", right));
         telemetry.addData("gamepad1", gamepad1);
         telemetry.addData("gamepad2", gamepad2);
+        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        telemetry.addLine()
+                .addData("status", imu.getSystemStatus().toShortString())
+                .addData("calib", imu.getCalibrationStatus().toString())
+                .addData("heading", Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) % 360);
     }
-
     /*
      * Code to run when the op mode is first disabled goes here
      *
@@ -199,6 +264,14 @@ public class TeamTankDrive extends OpMode {
      */
     double scaleInput(double dVal)  {
         return dVal*dVal*dVal;		// maps {-1,1} -> {-1,1}
+    }
+
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 
 }
