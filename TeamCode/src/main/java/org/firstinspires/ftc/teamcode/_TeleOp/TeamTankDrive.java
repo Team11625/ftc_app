@@ -38,6 +38,8 @@ public class TeamTankDrive extends OpMode {
     private DcMotor armActivatorLeft = null;
     private DcMotor armActivatorRight = null;
 
+    private DcMotor latchMotor = null;
+
     private Servo markerArm;
 
     private BNO055IMU imu;
@@ -227,6 +229,21 @@ public class TeamTankDrive extends OpMode {
             else{
                 arm.setPower(0);
             }
+
+            //---Latch code by Kale---\\
+            if (gamepad1.dpad_up = true){
+                runtime.reset();
+                while (runtime < 1){
+                    latchMotor.setPower(.5);
+                }
+                latchMotor.setPower(0);
+            }
+            if (gamepad1.dpad_down = true){
+                runtime.reset();
+                while (runtime < 1){
+                    latchMotor.setPower(-.5);
+                }
+                latchMotor.setPower(0);
         }
 
         /*
