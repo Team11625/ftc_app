@@ -37,10 +37,9 @@ public class TeamTankDrive extends OpMode {
     private DcMotor arm = null; //the arm that captures the blocks and balls, controlled by left hand motor
     private DcMotor armActivatorLeft = null;
     private DcMotor armActivatorRight = null;
+    private DcMotor lift = null;
 
     private Servo markerArm;
-
-    private BNO055IMU imu;
 
     boolean bDebug = false;
 
@@ -53,19 +52,16 @@ public class TeamTankDrive extends OpMode {
 
             rightfrontDrive = hardwareMap.get(DcMotor.class, "frontRight");
             rightfrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
-
 
             leftbackDrive = hardwareMap.get(DcMotor.class, "backLeft");
             leftbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             arm = hardwareMap.get(DcMotor.class, "arm");
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            arm.setDirection(DcMotor.Direction.REVERSE);
 
             armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
             armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -74,18 +70,12 @@ public class TeamTankDrive extends OpMode {
             armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
             armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+            lift = hardwareMap.get(DcMotor.class, "Lift");
+            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            lift.setDirection(DcMotor.Direction.REVERSE);
+
+
             markerArm = hardwareMap.get(Servo.class, "markerArm");
-
-            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-            parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-            parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-            parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-            parameters.loggingEnabled = true;
-            parameters.loggingTag = "IMU";
-            parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-            imu = hardwareMap.get(BNO055IMU.class, "imu");
-            imu.initialize(parameters);
         }
         catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -99,7 +89,6 @@ public class TeamTankDrive extends OpMode {
      */
     @Override
     public void start() {
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
     }
 
     @Override
@@ -120,10 +109,7 @@ public class TeamTankDrive extends OpMode {
         boolean rightBumper2 = gamepad2.right_bumper;
 
         boolean aButton = gamepad1.a;
-
-        String speed = "Max Speed";
-
-        boolean aIsPressed = false;
+        boolean bButton = gamepad1.b;
 
         // clip the right/left values so that the values never exceed +/- 1
         left = Range.clip(left, -1, 1);
@@ -134,45 +120,8 @@ public class TeamTankDrive extends OpMode {
         left = (float)scaleInput(left);
         right = (float)scaleInput(right);
 
-        if(aButton == true && aIsPressed == false){
-            if(speed == "Max Speed"){
-                speed = "Quarter Speed";
-                aIsPressed = true;
-            }
-            else if(speed == "Quarter Speed"){
-                speed = "Half Speed";
-                aIsPressed = true;
-            }
-            else if(speed == "Half Speed"){
-                speed = "Max Speed";
-                aIsPressed = true;
-            }
-        }
-        else if(aButton == false && aIsPressed == true){
-            aIsPressed = false;
-        }
-
         // write the values to the motors - for now, front and back motors on each side are set the same
         if (!bDebug) {
-
-		/*	if(speed == "Max Speed") {
-				rightfrontDrive.setPower(right);
-				rightbackDrive.setPower(right);
-				leftfrontDrive.setPower(left);
-				leftbackDrive.setPower(left);
-			}
-			else if(speed == "Half Speed"){
-				rightfrontDrive.setPower(right/2);
-				rightbackDrive.setPower(right/2);
-				leftfrontDrive.setPower(left/2);
-				leftbackDrive.setPower(left/2);
-			}
-			else if(speed == "Quarter Speed"){
-				rightfrontDrive.setPower(right/4);
-				rightbackDrive.setPower(right/4);
-				leftfrontDrive.setPower(left/4);
-				leftbackDrive.setPower(left/4);
-			} */
 
             rightfrontDrive.setPower(right);
             rightbackDrive.setPower(right);
@@ -227,6 +176,18 @@ public class TeamTankDrive extends OpMode {
             else{
                 arm.setPower(0);
             }
+
+            if(aButton == true){
+                lift.setPower(1);
+            }
+            else if(bButton == true){
+                lift.setPower(-1);
+            }
+            else{
+                lift.setPower(0);
+            }
+
+
         }
 
         /*
@@ -236,16 +197,10 @@ public class TeamTankDrive extends OpMode {
          * are currently write only.
          */
 
-        telemetry.addData("Speed: ", speed);
         telemetry.addData("left pwr", String.format("%.2f", left));
         telemetry.addData("right pwr", String.format("%.2f", right));
         telemetry.addData("gamepad1", gamepad1);
         telemetry.addData("gamepad2", gamepad2);
-        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        telemetry.addLine()
-                .addData("status", imu.getSystemStatus().toShortString())
-                .addData("calib", imu.getCalibrationStatus().toString())
-                .addData("heading", Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) % 360);
     }
     /*
      * Code to run when the op mode is first disabled goes here
@@ -264,14 +219,6 @@ public class TeamTankDrive extends OpMode {
      */
     double scaleInput(double dVal)  {
         return dVal*dVal*dVal;		// maps {-1,1} -> {-1,1}
-    }
-
-    String formatAngle(AngleUnit angleUnit, double angle) {
-        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-    }
-
-    String formatDegrees(double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 
 }

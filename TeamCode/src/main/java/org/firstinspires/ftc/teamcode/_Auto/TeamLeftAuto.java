@@ -19,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode._Libs.BNO055IMUHeadingSensor;
 
 import java.util.Locale;
 
@@ -37,11 +38,9 @@ public class TeamLeftAuto extends LinearOpMode {
     private DcMotor armActivator = null;
     private Servo markerArm;
 
-    private BNO055IMU imu;
+    private BNO055IMUHeadingSensor mIMU;
 
-    double angle;
-    double startAngle;
-    double targetAngle;
+    float targetAngle;
 
     @Override
     public void runOpMode() {
@@ -52,15 +51,13 @@ public class TeamLeftAuto extends LinearOpMode {
 
             rightfrontDrive = hardwareMap.get(DcMotor.class, "frontRight");
             rightfrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightfrontDrive.setDirection(DcMotor.Direction.REVERSE);
-
 
             leftbackDrive = hardwareMap.get(DcMotor.class, "backLeft");
             leftbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            rightbackDrive.setDirection(DcMotor.Direction.REVERSE);
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
 
@@ -71,16 +68,8 @@ public class TeamLeftAuto extends LinearOpMode {
             bDebug = true;
         }
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
+        mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
+        mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
         waitForStart(); //the rest of the code begins after the play button is pressed
 
@@ -88,11 +77,11 @@ public class TeamLeftAuto extends LinearOpMode {
 
         drive(0.35,0.5);
 
-        turn(90.0); //turn 90 degrees to the left
+        turn(90.0f); //turn 90 degrees to the left
 
-        drive(1.75,0.5);
+        drive(1.45,0.5);
 
-        turn(35); //turn 35 degrees to the left
+        turn(40.0f); //turn 35 degrees to the left
 
         drive(2.5,-0.5);
 
@@ -106,16 +95,12 @@ public class TeamLeftAuto extends LinearOpMode {
 
         sleep(1000);
 
-        drive(2.0,0.5);
-
-        turn(30.0);
-
-        drive(3.0,1.0);
+        drive(4.0,1.0);
 
         requestOpModeStop(); //end of autonomous
     }
 
-    double mod(double a, double b){
+    float mod(float a, float b){
         if (a < 0) {
             a += b;
         }
@@ -123,14 +108,6 @@ public class TeamLeftAuto extends LinearOpMode {
             a -= b;
         }
         return a;
-    }
-
-    String formatAngle (AngleUnit angleUnit,double angle){
-        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-    }
-
-    String formatDegrees ( double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 
     public void drive(double time, double power){
@@ -143,18 +120,35 @@ public class TeamLeftAuto extends LinearOpMode {
         }
     }
 
-    public void turn (double turnAngle){
-        final Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    public void driveEncoder(){
+        leftfrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        angle = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)); //turns the angle from the imu which is a string into a double
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        startAngle = mod(angle, 360.0); //clips range from 0 - 359
+        leftfrontDrive.setTargetPosition(1120);
 
-        targetAngle = mod((startAngle + turnAngle), 360.0);
+        leftfrontDrive.setPower(0.5);
+        rightfrontDrive.setPower(0.5);
+        leftbackDrive.setPower(0.5);
+        rightbackDrive.setPower(0.5);
+
+        while(leftfrontDrive.isBusy() && opModeIsActive()) {
+
+        }
+
+        leftfrontDrive.setPower(0);
+        rightfrontDrive.setPower(0);
+        leftbackDrive.setPower(0);
+        leftbackDrive.setPower(0);
+    }
+
+    public void turn (float turnAngle){ //left turn
+
+        targetAngle = mIMU.getHeading() + turnAngle;
 
         while(opModeIsActive()){
 
-            if(targetAngle - mod(Double.parseDouble(formatAngle(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).angleUnit, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle)), 360.0) < 3.0) { //3 degree margin of error
+            if(targetAngle - mIMU.getHeading() < 3.0) { //3 degree margin of error
                 leftfrontDrive.setPower(0);
                 leftbackDrive.setPower(0);
                 rightfrontDrive.setPower(0);
