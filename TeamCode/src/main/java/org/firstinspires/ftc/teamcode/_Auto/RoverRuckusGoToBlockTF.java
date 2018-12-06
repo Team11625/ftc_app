@@ -234,10 +234,10 @@ public class RoverRuckusGoToBlockTF extends OpMode  {
         // either dummy motors that just log data or real ones that drive the hardware
         // assumed order is fr, br, fl, bl
         try {
-            motors[0] = mf.getDcMotor("fr");
-            motors[1] = mf.getDcMotor("br");
-            motors[2] = mf.getDcMotor("fl");
-            motors[3] = mf.getDcMotor("bl");
+            motors[0] = mf.getDcMotor("frontLeft");
+            motors[1] = mf.getDcMotor("backRight");
+            motors[2] = mf.getDcMotor("frontLeft");
+            motors[3] = mf.getDcMotor("backLeft");
             return (motors[0]!=null && motors[1]!=null && motors[2]!=null && motors[3]!=null);
         }
         catch (Exception c) {
@@ -256,20 +256,11 @@ public class RoverRuckusGoToBlockTF extends OpMode  {
         if (!getHardware(new AutoLib.RealHardwareFactory(this), mMotors)) {
             getHardware(new AutoLib.TestHardwareFactory(this), mMotors);
         }
-
-        boolean invertLeft = true;     // current ratbot ...
-        if (invertLeft) {
-            mMotors[2].setDirection(DcMotor.Direction.REVERSE);
-            mMotors[3].setDirection(DcMotor.Direction.REVERSE);
-        }
-        else {
-            mMotors[0].setDirection(DcMotor.Direction.REVERSE);
-            mMotors[1].setDirection(DcMotor.Direction.REVERSE);
-        }
+        mMotors[3].setDirection(DcMotor.Direction.REVERSE);
 
         // get hardware IMU and wrap gyro in HeadingSensor object usable below
         mGyro = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
-        mGyro.init(3);  // 3: upright crosswise with REV face forward
+        mGyro.init(7);  // 7; rev hub face down with rev word toward the back
 
 
         // best to do this now, which is called from opmode's init() function
