@@ -20,8 +20,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 import java.util.Locale;
 
-@Autonomous(name="TeamRightAuto", group="Autonomous")
-public class TeamRightAuto extends LinearOpMode {
+@Autonomous(name="CraterAuto", group="Autonomous")
+public class CraterAuto extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
