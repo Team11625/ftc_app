@@ -25,6 +25,8 @@ public class TestAuto extends LinearOpMode {
     private DcMotor leftbackDrive = null;
     private DcMotor rightbackDrive = null;
 
+    private DcMotor lift = null;
+
     private BNO055IMUHeadingSensor mIMU;
 
     @Override
@@ -43,18 +45,30 @@ public class TestAuto extends LinearOpMode {
         rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
         rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        lift = hardwareMap.get(DcMotor.class, "Lift");
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift.setDirection(DcMotor.Direction.REVERSE);
+
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
         waitForStart();
 
-        while(opModeIsActive()){
+        /*while(opModeIsActive()){
             telemetry.addData("orientation: ", mIMU.getHeading());
             telemetry.update();
 
-        }
+        }*/
 
         //driveEncoder();
+
+        testLiftUp();
+
+        sleep(2000);
+
+        testLiftDown();
+
+        requestOpModeStop();
 
     }
 
@@ -87,5 +101,31 @@ public class TestAuto extends LinearOpMode {
         rightfrontDrive.setPower(0);
         leftbackDrive.setPower(0);
         leftbackDrive.setPower(0);
+    }
+
+    public void testLiftUp(){
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lift.setTargetPosition(1440);
+        lift.setPower(1);
+
+        while(lift.isBusy() && opModeIsActive()) {
+
+        }
+
+        lift.setPower(0);
+    }
+
+    public void testLiftDown(){
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lift.setTargetPosition(-1440);
+        lift.setPower(1);
+
+        while(lift.isBusy() && opModeIsActive()) {
+
+        }
+
+        lift.setPower(0);
     }
 }

@@ -128,7 +128,7 @@ public class TeamTankDrive extends OpMode {
             leftfrontDrive.setPower(left);
             leftbackDrive.setPower(left);
 
-            if (rightBumper1 == true || rightBumper2 == true) {
+            if (rightBumper1 == true || rightBumper2 == true) { //lower zach attack
                 runtime.reset();
 
                 while(runtime.seconds() < .4) {
@@ -142,22 +142,22 @@ public class TeamTankDrive extends OpMode {
                 armActivatorLeft.setPower(0);
                 armActivatorRight.setPower(0);
             }
-            else if (leftBumper1 == true || leftBumper2 == true) {
+            else if (leftBumper1 == true || leftBumper2 == true) { //raise zach attack
                 runtime.reset();
 
-                while(runtime.seconds() < .5) {
-                    armActivatorLeft.setPower(-.5);
-                    armActivatorRight.setPower(-.5);
+                while(runtime.seconds() < .65) {
+                    armActivatorLeft.setPower(-.4);
+                    armActivatorRight.setPower(-.4);
                 }
                 while(runtime.seconds() < .15) {
-                    armActivatorLeft.setPower(-.1);
-                    armActivatorRight.setPower(-.1);
+                    armActivatorLeft.setPower(-.2);
+                    armActivatorRight.setPower(-.2);
                 }
                 armActivatorLeft.setPower(0);
                 armActivatorRight.setPower(0);
             }
 
-            if (rightTrigger1 > 0 || rightTrigger2 > 0) {
+            if (rightTrigger1 > 0 || rightTrigger2 > 0) { //suck in objects
                 if(rightTrigger2 > 0){
                     arm.setPower((rightTrigger2));
                 }
@@ -165,7 +165,7 @@ public class TeamTankDrive extends OpMode {
                     arm.setPower(rightTrigger1);
                 }
             }
-            else if (leftTrigger1 > 0 || leftTrigger2 > 0) {
+            else if (leftTrigger1 > 0 || leftTrigger2 > 0) { //spit objects out
                 if(leftTrigger2 > 0){
                     arm.setPower((-leftTrigger2));
                 }
@@ -177,7 +177,7 @@ public class TeamTankDrive extends OpMode {
                 arm.setPower(0);
             }
 
-            if(aButton == true){
+            if(aButton == true){ //lift to latch
                 lift.setPower(1);
             }
             else if(bButton == true){
@@ -186,8 +186,6 @@ public class TeamTankDrive extends OpMode {
             else{
                 lift.setPower(0);
             }
-
-
         }
 
         /*
