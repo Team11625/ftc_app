@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 import java.util.Locale;
 @Autonomous(name="LatchAuto", group="Autonomous")
-public class TestAuto extends LinearOpMode {
+public class LatchAuto extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -85,9 +85,6 @@ public class TestAuto extends LinearOpMode {
 
         runtime.reset();
 
-        while(runtime < 2){
-
-        }
 
         leftfrontDrive.setTargetPosition(-1120);
         rightfrontDrive.setTargetPosition(-1120);
