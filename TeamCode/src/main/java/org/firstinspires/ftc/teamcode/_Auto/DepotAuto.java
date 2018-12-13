@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode._Auto;
 import android.view.ViewDebug;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -44,12 +45,9 @@ public class DepotAuto extends LinearOpMode {
 
     private Servo markerArm;
 
-    private String pos;
-
     private BNO055IMUHeadingSensor mIMU;
 
     boolean bDebug = false;
-    float targetAngle;
 
     @Override
     public void runOpMode() {
@@ -81,6 +79,10 @@ public class DepotAuto extends LinearOpMode {
             bDebug = true;
         }
 
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
@@ -102,70 +104,50 @@ public class DepotAuto extends LinearOpMode {
 
         sample();
 
-        /*if(pos == "left"){
-            goldLeft();
-        }
-        else if(pos == "middle"){
-            goldMiddle();
-        }
-        else if(pos == "right"){
-            goldRight();
-        }*/
-
         requestOpModeStop(); //end of autonomous
     }
 
     public void goldLeft(){
-        leftTurn(45.0f);
-        driveEncoder(4000, 0.5);
-        leftTurn(90.0f);
-        driveEncoder(-4000, 0.5);
+        leftTurn(35.0f);
+        driveEncoder(3750, 0.5);
+        leftTurn(100.0f);
+        driveEncoder(-2750, 0.5);
         markerArm.setPosition(1);
         sleep(1000);
         markerArm.setPosition(0);
         sleep(1000);
         driveEncoder(6000, 0.5);
         leftTurn(15.0f);
-        driveEncoder(2000, 1.0);
+        driveEncoder(1000, 1.0);
     }
 
     public void goldMiddle(){
-        driveEncoder(4000, 0.5);
-        leftTurn(45.0f);
-        driveEncoder(1000,0.5);
-        leftTurn(90.0f);
-        //markerArm.setPosition(1);
-        //sleep(2000);
-        //markerArm.setPosition(0);
-        //sleep(1000);
-        //driveEncoder(6000, 0.5);
-        //leftTurn(15.0f);
-        //driveEncoder(2000, 1.0);
+        driveEncoder(5000, 0.5);
+        leftTurn(67.5f);
+        markerArm.setPosition(1);
+        sleep(2000);
+        markerArm.setPosition(0);
+        sleep(1000);
+        leftTurn(67.5f);
+        driveEncoder(6000, 0.5);
+        leftTurn(15.0f);
+        driveEncoder(1000, 1.0);
     }
 
     public void goldRight(){
         rightTurn(30.0f);
         driveEncoder(4000, 0.5);
-        leftTurn(120.0f);
-        //driveEncoder(4000, 0.5);
-        //leftTurn(90.0f);
-        //markerArm.setPosition(1);
-        //sleep(1000);
-        //markerArm.setPosition(0);
-        //sleep(1000);
-        //driveEncoder(6000, 0.5);
-        //leftTurn(15.0f);
-        //driveEncoder(2000,1.0);
-    }
-
-    public void drive(double time, double power){
-        runtime.reset();
-        while(runtime.seconds() < time){
-            leftfrontDrive.setPower(power);
-            leftbackDrive.setPower(power);
-            rightfrontDrive.setPower(power);
-            rightbackDrive.setPower(power);
-        }
+        leftTurn(75.0f);
+        driveEncoder(2750, 0.5);
+        leftTurn(45.0f);
+        markerArm.setPosition(1);
+        sleep(1000);
+        markerArm.setPosition(0);
+        sleep(1000);
+        leftTurn(45.0f);
+        driveEncoder(6000, 0.5);
+        leftTurn(15.0f);
+        driveEncoder(1250,1.0);
     }
 
     public void driveEncoder(int ticks, double pow){
@@ -196,7 +178,12 @@ public class DepotAuto extends LinearOpMode {
         leftfrontDrive.setPower(0);
         rightfrontDrive.setPower(0);
         leftbackDrive.setPower(0);
-        leftbackDrive.setPower(0);
+        rightbackDrive.setPower(0);
+
+        leftfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightfrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftbackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightbackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void unlatch(){
@@ -210,15 +197,18 @@ public class DepotAuto extends LinearOpMode {
         }
 
         lift.setPower(0);
+
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void leftTurn (float turnAngle){ //left turn
 
-        targetAngle = mIMU.getHeading() + turnAngle;
+        float targetAngle = mIMU.getHeading() + turnAngle;
 
         while(opModeIsActive()){
 
-            if(targetAngle - mIMU.getHeading() < 0.0) {
+            if(mIMU.getHeading() >= targetAngle - 1.0f) {
+                telemetry.update();
                 leftfrontDrive.setPower(0);
                 leftbackDrive.setPower(0);
                 rightfrontDrive.setPower(0);
@@ -235,11 +225,11 @@ public class DepotAuto extends LinearOpMode {
 
     public void rightTurn (float turnAngle){
 
-        targetAngle = mIMU.getHeading() - turnAngle;
+        float targetAngle = mIMU.getHeading() - turnAngle;
 
         while(opModeIsActive()){
 
-            if(targetAngle - mIMU.getHeading() > 0.0) {
+            if(mIMU.getHeading() <= targetAngle + 1.0f) {
                 leftfrontDrive.setPower(0);
                 leftbackDrive.setPower(0);
                 rightfrontDrive.setPower(0);
@@ -284,15 +274,12 @@ public class DepotAuto extends LinearOpMode {
                             if (goldMineralX != -1 && silverMineral1X != -1 || silverMineral1X != -1 && silverMineral2X != -1) {
                                 if (goldMineralX < silverMineral1X && goldMineralX != -1) {
                                     telemetry.addData("Gold Mineral Position", "left");
-                                    pos = "left";
                                     goldLeft();
                                 } else if (goldMineralX > silverMineral1X) {
                                     telemetry.addData("Gold Mineral Position", "middle");
-                                    pos = "middle";
                                     goldMiddle();
                                 } else {
                                     telemetry.addData("Gold Mineral Position", "right");
-                                    pos = "right";
                                     goldRight();
                                 }
                             }
