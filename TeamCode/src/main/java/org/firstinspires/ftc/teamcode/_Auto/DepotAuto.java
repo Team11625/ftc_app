@@ -239,7 +239,7 @@ public class DepotAuto extends LinearOpMode {
 
         while(opModeIsActive()){
 
-            if(targetAngle - mIMU.getHeading() < 0.0) {
+            if(targetAngle - mIMU.getHeading() > 0.0) {
                 leftfrontDrive.setPower(0);
                 leftbackDrive.setPower(0);
                 rightfrontDrive.setPower(0);
