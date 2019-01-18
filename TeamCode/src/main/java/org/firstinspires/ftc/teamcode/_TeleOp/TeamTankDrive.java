@@ -5,6 +5,7 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -69,13 +70,15 @@ public class TeamTankDrive extends OpMode {
 
             armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
             armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivatorRight.setDirection(DcMotor.Direction.REVERSE);
 
             lift = hardwareMap.get(DcMotor.class, "Lift");
             lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             lift.setDirection(DcMotor.Direction.REVERSE);
 
-
             markerArm = hardwareMap.get(Servo.class, "markerArm");
+
+            lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
         catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -139,7 +142,7 @@ public class TeamTankDrive extends OpMode {
                     armActivatorLeft.setPower(-.3);
                     armActivatorRight.setPower(-.3);
                 }
-                armActivatorLeft.setPower(0);
+                //armActivatorLeft.setPower(0);
                 armActivatorRight.setPower(0);
             }
             else if (leftBumper1 == true || leftBumper2 == true) { //raise zach attack
@@ -153,6 +156,10 @@ public class TeamTankDrive extends OpMode {
                     armActivatorLeft.setPower(-.2);
                     armActivatorRight.setPower(-.2);
                 }
+                armActivatorLeft.setPower(0);
+                armActivatorRight.setPower(0);
+            }
+            else{
                 armActivatorLeft.setPower(0);
                 armActivatorRight.setPower(0);
             }
@@ -177,10 +184,10 @@ public class TeamTankDrive extends OpMode {
                 arm.setPower(0);
             }
 
-            if(aButton == true){ //lift to latch
+            if(aButton == true && lift.getCurrentPosition() < 5000){ //lift to latch
                 lift.setPower(1);
             }
-            else if(bButton == true){
+            else if(bButton == true && lift.getCurrentPosition() > 100){
                 lift.setPower(-1);
             }
             else{
@@ -195,6 +202,7 @@ public class TeamTankDrive extends OpMode {
          * are currently write only.
          */
 
+        telemetry.addData("ticks", lift.getCurrentPosition());
         telemetry.addData("left pwr", String.format("%.2f", left));
         telemetry.addData("right pwr", String.format("%.2f", right));
         telemetry.addData("gamepad1", gamepad1);
@@ -218,5 +226,4 @@ public class TeamTankDrive extends OpMode {
     double scaleInput(double dVal)  {
         return dVal*dVal*dVal;		// maps {-1,1} -> {-1,1}
     }
-
 }
