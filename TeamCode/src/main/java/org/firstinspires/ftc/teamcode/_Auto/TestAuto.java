@@ -27,6 +27,9 @@ public class TestAuto extends LinearOpMode {
 
     private DcMotor lift = null;
 
+    private DcMotor armActivatorLeft = null;
+    private DcMotor armActivatorRight = null;
+
     private BNO055IMUHeadingSensor mIMU;
 
     @Override
@@ -52,24 +55,60 @@ public class TestAuto extends LinearOpMode {
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
+        armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
+        armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armActivatorLeft.setDirection(DcMotor.Direction.REVERSE);
+
+        armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
+        armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armActivatorRight.setDirection(DcMotor.Direction.REVERSE);
+
         waitForStart();
 
-        /*while(opModeIsActive()){
-            telemetry.addData("orientation: ", mIMU.getHeading());
-            telemetry.update();
+        //releaseMarker();
 
-        }*/
-
-        //driveEncoder();
-
-        testLiftUp();
-
-        sleep(2000);
-
-        testLiftDown();
+        telemetry.addData("ticks left", armActivatorLeft.getCurrentPosition());
+        telemetry.addData("ticks right", armActivatorRight.getCurrentPosition());
 
         requestOpModeStop();
 
+    }
+
+    public void releaseMarker (){
+        armActivatorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivatorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armActivatorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivatorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        armActivatorLeft.setTargetPosition(50);
+        armActivatorRight.setTargetPosition(50);
+
+        armActivatorLeft.setPower(.3);
+        armActivatorRight.setPower(.3);
+
+        while(armActivatorLeft.isBusy() && armActivatorRight.isBusy() && opModeIsActive()) {
+
+        }
+
+        /*armActivatorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivatorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armActivatorLeft.setTargetPosition(-200);
+        armActivatorRight.setTargetPosition(-200);
+
+        armActivatorLeft.setPower(1);
+        armActivatorRight.setPower(1);
+
+        while(armActivatorLeft.isBusy() && armActivatorRight.isBusy() && opModeIsActive()) {
+
+        } */
+
+        armActivatorLeft.setPower(0);
+        armActivatorRight.setPower(0);
+
+        armActivatorLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armActivatorRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void driveEncoder(){

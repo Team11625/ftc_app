@@ -40,7 +40,8 @@ public class DepotAuto extends LinearOpMode {
     private DcMotor rightfrontDrive = null;
     private DcMotor leftbackDrive = null;
     private DcMotor rightbackDrive = null;
-    private DcMotor armActivator = null;
+    private DcMotor armActivatorLeft = null;
+    private DcMotor armActivatorRight = null;
     private DcMotor lift = null;
 
     private Servo markerArm;
@@ -72,8 +73,11 @@ public class DepotAuto extends LinearOpMode {
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
 
-            armActivator = hardwareMap.get(DcMotor.class, "armActivator");
-            armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
+            armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
+            armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         } catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -96,58 +100,51 @@ public class DepotAuto extends LinearOpMode {
 
         waitForStart(); //the rest of the code begins after the play button is pressed
 
-        sleep(1000);
+        //sleep(1000);
 
         //unlatch();
 
         //sleep(1000);
 
-        sample();
+        //sample();
+
+        goldRight();
 
         requestOpModeStop(); //end of autonomous
     }
 
     public void goldLeft(){
-        leftTurn(35.0f);
+        leftTurn(32.5f);
         driveEncoder(3750, 0.5);
-        leftTurn(100.0f);
-        driveEncoder(-2750, 0.5);
-        markerArm.setPosition(1);
+        rightTurn(80.0f);
+        driveEncoder(1250, 0.5);
+        //sleep(1000);
+        //releaseMarker();
         sleep(1000);
-        markerArm.setPosition(0);
-        sleep(1000);
-        driveEncoder(6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(1000, 1.0);
+        driveEncoder(-5000, 0.5);
     }
 
     public void goldMiddle(){
-        driveEncoder(5000, 0.5);
-        leftTurn(67.5f);
-        markerArm.setPosition(1);
-        sleep(2000);
-        markerArm.setPosition(0);
+        driveEncoder(4250, 0.5);
         sleep(1000);
-        leftTurn(67.5f);
-        driveEncoder(6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(1000, 1.0);
+        //releaseMarker();
+        sleep(1000);
+        driveEncoder(-2750, 0.5);
+        rightTurn(75.0f);
+        driveEncoder(-5000, 0.5);
     }
 
     public void goldRight(){
         rightTurn(30.0f);
         driveEncoder(4000, 0.5);
         leftTurn(75.0f);
-        driveEncoder(2750, 0.5);
-        leftTurn(45.0f);
-        markerArm.setPosition(1);
+        driveEncoder(2800, 0.5);
+        rightTurn(90.0f);
+        driveEncoder(-1750, 0.5);
         sleep(1000);
-        markerArm.setPosition(0);
+        //releaseMarker();
         sleep(1000);
-        leftTurn(45.0f);
-        driveEncoder(6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(1250,1.0);
+        driveEncoder(-5100, 0.5);
     }
 
     public void driveEncoder(int ticks, double pow){
@@ -242,6 +239,30 @@ public class DepotAuto extends LinearOpMode {
             rightfrontDrive.setPower(-.3);
             rightbackDrive.setPower(-.3);
         }
+    }
+
+    public void releaseMarker (){
+        armActivatorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivatorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armActivatorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivatorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        armActivatorLeft.setTargetPosition(2000);
+        armActivatorRight.setTargetPosition(2000);
+
+        armActivatorLeft.setPower(.5);
+        armActivatorRight.setPower(.5);
+
+        while(armActivatorLeft.isBusy() && armActivatorRight.isBusy() && opModeIsActive()) {
+
+        }
+
+        armActivatorLeft.setPower(0);
+        armActivatorRight.setPower(0);
+
+        armActivatorLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armActivatorRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void sample(){
