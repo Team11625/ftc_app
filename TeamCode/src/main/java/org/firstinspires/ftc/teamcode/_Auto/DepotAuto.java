@@ -40,15 +40,16 @@ public class DepotAuto extends LinearOpMode {
     private DcMotor rightfrontDrive = null;
     private DcMotor leftbackDrive = null;
     private DcMotor rightbackDrive = null;
-    private DcMotor armActivatorLeft = null;
-    private DcMotor armActivatorRight = null;
-    private DcMotor lift = null;
+    private DcMotor armActivator = null;
+    private DcMotor liftTop = null;
+    private DcMotor liftBottom = null;
 
     private Servo markerArm;
 
     private BNO055IMUHeadingSensor mIMU;
 
     boolean bDebug = false;
+    boolean ranFailSafe = false;
 
     @Override
     public void runOpMode() {
@@ -67,17 +68,16 @@ public class DepotAuto extends LinearOpMode {
             rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            lift = hardwareMap.get(DcMotor.class, "Lift");
-            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            lift.setDirection(DcMotor.Direction.REVERSE);
+            liftTop = hardwareMap.get(DcMotor.class, "liftTop");
+            liftTop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            liftBottom = hardwareMap.get(DcMotor.class, "liftBottom");
+            liftBottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
 
-            armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
-            armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-            armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
-            armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivator = hardwareMap.get(DcMotor.class, "armActivator");
+            armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         } catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -90,6 +90,18 @@ public class DepotAuto extends LinearOpMode {
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(liftTop.getCurrentPosition());
+        liftBottom.setTargetPosition(liftBottom.getCurrentPosition());
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
         initVuforia();
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
@@ -100,51 +112,53 @@ public class DepotAuto extends LinearOpMode {
 
         waitForStart(); //the rest of the code begins after the play button is pressed
 
-        //sleep(1000);
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
 
-        //unlatch();
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        //sleep(1000);
+        unlatch();
 
-        //sample();
+        sleep(1000);
 
-        goldRight();
+        sample();
 
         requestOpModeStop(); //end of autonomous
     }
 
-    public void goldLeft(){
+    private void goldLeft(){
         leftTurn(32.5f);
-        driveEncoder(3750, 0.5);
+        driveEncoder(3750, 0.75);
         rightTurn(80.0f);
-        driveEncoder(1250, 0.5);
-        //sleep(1000);
-        //releaseMarker();
+        driveEncoder(1250, 0.75);
         sleep(1000);
-        driveEncoder(-5000, 0.5);
+        releaseMarker();
+        sleep(1000);
+        driveEncoder(-5000, 0.75);
     }
 
-    public void goldMiddle(){
-        driveEncoder(4250, 0.5);
+    private void goldMiddle(){
+        driveEncoder(4250, 0.75);
         sleep(1000);
-        //releaseMarker();
+        releaseMarker();
         sleep(1000);
-        driveEncoder(-2750, 0.5);
+        driveEncoder(-2750, 0.75);
         rightTurn(75.0f);
-        driveEncoder(-5000, 0.5);
+        driveEncoder(-5000, 0.75);
     }
 
-    public void goldRight(){
+    private void goldRight(){
         rightTurn(30.0f);
-        driveEncoder(4000, 0.5);
+        driveEncoder(4000, 0.75);
         leftTurn(75.0f);
-        driveEncoder(2800, 0.5);
+        driveEncoder(2800, 0.75);
         rightTurn(90.0f);
-        driveEncoder(-1750, 0.5);
+        driveEncoder(-1750, 0.75);
         sleep(1000);
-        //releaseMarker();
+        releaseMarker();
         sleep(1000);
-        driveEncoder(-5100, 0.5);
+        driveEncoder(-5100, 0.75);
     }
 
     public void driveEncoder(int ticks, double pow){
@@ -172,6 +186,7 @@ public class DepotAuto extends LinearOpMode {
 
         }
 
+
         leftfrontDrive.setPower(0);
         rightfrontDrive.setPower(0);
         leftbackDrive.setPower(0);
@@ -184,18 +199,53 @@ public class DepotAuto extends LinearOpMode {
     }
 
     public void unlatch(){
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lift.setTargetPosition(2000);
-        lift.setPower(1);
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        while(lift.isBusy() && opModeIsActive()) {
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(100);
+        liftBottom.setTargetPosition(100);
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
+        while(liftTop.isBusy() && liftBottom.isBusy() && opModeIsActive()) {
 
         }
 
-        lift.setPower(0);
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
 
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        driveEncoder(200, 0.5);
+
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(-225);
+        liftBottom.setTargetPosition(-225);
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
+        while(liftTop.isBusy() && liftBottom.isBusy() && opModeIsActive()) {
+
+        }
+
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        driveEncoder(-300, 0.2);
     }
 
     public void leftTurn (float turnAngle){ //left turn
@@ -242,27 +292,31 @@ public class DepotAuto extends LinearOpMode {
     }
 
     public void releaseMarker (){
-        armActivatorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armActivatorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivator.setTargetPosition(300);
 
-        armActivatorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armActivatorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivator.setPower(.25);
 
-        armActivatorLeft.setTargetPosition(2000);
-        armActivatorRight.setTargetPosition(2000);
-
-        armActivatorLeft.setPower(.5);
-        armActivatorRight.setPower(.5);
-
-        while(armActivatorLeft.isBusy() && armActivatorRight.isBusy() && opModeIsActive()) {
+        while(armActivator.isBusy()) {
 
         }
+        armActivator.setPower(0);
+        armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        armActivatorLeft.setPower(0);
-        armActivatorRight.setPower(0);
+        sleep(500);
 
-        armActivatorLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        armActivatorRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivator.setTargetPosition(-215);
+
+        armActivator.setPower(.25);
+
+        while(armActivator.isBusy()) {
+
+        }
+        armActivator.setPower(0);
+        armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void sample(){
@@ -271,7 +325,7 @@ public class DepotAuto extends LinearOpMode {
             if (tfod != null) {
                 tfod.activate();
             }
-
+            runtime.reset();
             while (opModeIsActive()) {
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
@@ -279,6 +333,10 @@ public class DepotAuto extends LinearOpMode {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
                         telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        if(runtime.milliseconds() >= 3500 && updatedRecognitions.size() != 2 && ranFailSafe == false){
+                            driveEncoder(30, 0.5);
+                            ranFailSafe = true;
+                        }
                         if (updatedRecognitions.size() == 2) {
                             int goldMineralX = -1;
                             int silverMineral1X = -1;

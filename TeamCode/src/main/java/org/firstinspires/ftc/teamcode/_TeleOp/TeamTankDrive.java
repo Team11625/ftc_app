@@ -36,9 +36,9 @@ public class TeamTankDrive extends OpMode {
     private DcMotor rightbackDrive = null;
 
     private DcMotor arm = null; //the arm that captures the blocks and balls, controlled by left hand motor
-    private DcMotor armActivatorLeft = null;
-    private DcMotor armActivatorRight = null;
-    private DcMotor lift = null;
+    private DcMotor armActivator = null;
+    private DcMotor liftTop = null;
+    private DcMotor liftBottom = null;
 
     private Servo markerArm;
 
@@ -62,23 +62,20 @@ public class TeamTankDrive extends OpMode {
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             arm = hardwareMap.get(DcMotor.class, "arm");
+            arm.setDirection(DcMotor.Direction.REVERSE);
             arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
-            armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            armActivatorLeft.setDirection(DcMotor.Direction.REVERSE);
+            armActivator = hardwareMap.get(DcMotor.class, "armActivator");
+            armActivator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-            armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
-            armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            armActivatorRight.setDirection(DcMotor.Direction.REVERSE);
+            liftTop = hardwareMap.get(DcMotor.class, "liftTop");
+            liftTop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            lift = hardwareMap.get(DcMotor.class, "Lift");
-            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            lift.setDirection(DcMotor.Direction.REVERSE);
+            liftBottom = hardwareMap.get(DcMotor.class, "liftBottom");
+            liftBottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
-
-            lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
         catch (IllegalArgumentException iax) {
             bDebug = true;
@@ -131,37 +128,37 @@ public class TeamTankDrive extends OpMode {
             leftfrontDrive.setPower(left);
             leftbackDrive.setPower(left);
 
-            if (rightBumper1 == true || rightBumper2 == true) { //lower zach attack
-                runtime.reset();
+            if (rightBumper1 == true && armActivator.getCurrentPosition() < 10) { //lower zach attack
 
-                while(runtime.seconds() < .4) {
-                    armActivatorLeft.setPower(.3);
-                    armActivatorRight.setPower(.3);
+                armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armActivator.setTargetPosition(250);
+
+                armActivator.setPower(.5);
+
+                while(armActivator.isBusy()) {
+
                 }
-                while(runtime.seconds() < .3) {
-                    armActivatorLeft.setPower(-.3);
-                    armActivatorRight.setPower(-.3);
-                }
-                //armActivatorLeft.setPower(0);
-                armActivatorRight.setPower(0);
+                armActivator.setPower(0);
+                armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
             }
-            else if (leftBumper1 == true || leftBumper2 == true) { //raise zach attack
-                runtime.reset();
+            else if (leftBumper1 == true && armActivator.getCurrentPosition() > 350) { //raise zach attack
 
-                while(runtime.seconds() < .65) {
-                    armActivatorLeft.setPower(-.4);
-                    armActivatorRight.setPower(-.4);
+                armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armActivator.setTargetPosition(-215);
+
+                armActivator.setPower(.5);
+
+                while(armActivator.isBusy()) {
+
                 }
-                while(runtime.seconds() < .15) {
-                    armActivatorLeft.setPower(-.2);
-                    armActivatorRight.setPower(-.2);
-                }
-                armActivatorLeft.setPower(0);
-                armActivatorRight.setPower(0);
+                armActivator.setPower(0);
+                armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             }
             else{
-                armActivatorLeft.setPower(0);
-                armActivatorRight.setPower(0);
+                armActivator.setPower(0);
             }
 
             if (rightTrigger1 > 0 || rightTrigger2 > 0) { //suck in objects
@@ -184,14 +181,17 @@ public class TeamTankDrive extends OpMode {
                 arm.setPower(0);
             }
 
-            if(aButton == true && lift.getCurrentPosition() < 5000){ //lift to latch
-                lift.setPower(1);
+            if(aButton == true /*&& lift.getCurrentPosition() < 5000*/){ //lift to latch
+                liftTop.setPower(1);
+                liftBottom.setPower(1);
             }
-            else if(bButton == true && lift.getCurrentPosition() > 100){
-                lift.setPower(-1);
+            else if(bButton == true /*&& lift.getCurrentPosition() > 100*/){
+                liftTop.setPower(-1);
+                liftBottom.setPower(-1);
             }
             else{
-                lift.setPower(0);
+                liftTop.setPower(0);
+                liftBottom.setPower(0);
             }
         }
 
@@ -202,7 +202,9 @@ public class TeamTankDrive extends OpMode {
          * are currently write only.
          */
 
-        telemetry.addData("ticks", lift.getCurrentPosition());
+        telemetry.addData("lift top ticks", liftTop.getCurrentPosition());
+        telemetry.addData("lift bottom ticks", liftBottom.getCurrentPosition());
+        telemetry.addData("zach attack ticks", armActivator.getCurrentPosition());
         telemetry.addData("left pwr", String.format("%.2f", left));
         telemetry.addData("right pwr", String.format("%.2f", right));
         telemetry.addData("gamepad1", gamepad1);
