@@ -50,18 +50,16 @@ public class TestAuto extends LinearOpMode {
 
         lift = hardwareMap.get(DcMotor.class, "Lift");
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setDirection(DcMotor.Direction.REVERSE);
 
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
-        armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivatorLeft");
+        armActivatorLeft = hardwareMap.get(DcMotor.class, "armActivator");
         armActivatorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        armActivatorLeft.setDirection(DcMotor.Direction.REVERSE);
 
-        armActivatorRight = hardwareMap.get(DcMotor.class, "armActivatorRight");
-        armActivatorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        armActivatorRight.setDirection(DcMotor.Direction.REVERSE);
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lift.setTargetPosition(0);
 
         waitForStart();
 
@@ -87,7 +85,7 @@ public class TestAuto extends LinearOpMode {
         armActivatorLeft.setPower(.3);
         armActivatorRight.setPower(.3);
 
-        while(armActivatorLeft.isBusy() && armActivatorRight.isBusy() && opModeIsActive()) {
+        while(armActivatorLeft.isBusy() && opModeIsActive()) {
 
         }
 

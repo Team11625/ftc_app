@@ -41,13 +41,15 @@ public class CraterAuto extends LinearOpMode {
     private DcMotor leftbackDrive = null;
     private DcMotor rightbackDrive = null;
     private DcMotor armActivator = null;
-    private DcMotor lift = null;
+    private DcMotor liftTop = null;
+    private DcMotor liftBottom = null;
 
     private Servo markerArm;
 
     private BNO055IMUHeadingSensor mIMU;
 
     boolean bDebug = false;
+    boolean ranFailSafe = false;
 
     @Override
     public void runOpMode() {
@@ -66,9 +68,11 @@ public class CraterAuto extends LinearOpMode {
             rightbackDrive = hardwareMap.get(DcMotor.class, "backRight");
             rightbackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            lift = hardwareMap.get(DcMotor.class, "Lift");
-            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            lift.setDirection(DcMotor.Direction.REVERSE);
+            liftTop = hardwareMap.get(DcMotor.class, "liftTop");
+            liftTop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            liftBottom = hardwareMap.get(DcMotor.class, "liftBottom");
+            liftBottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             markerArm = hardwareMap.get(Servo.class, "markerArm");
 
@@ -86,6 +90,18 @@ public class CraterAuto extends LinearOpMode {
         mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mIMU.init(7);  // 7: Rev Hub face down with the word Rev facing back
 
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(liftTop.getCurrentPosition());
+        liftBottom.setTargetPosition(liftBottom.getCurrentPosition());
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
         initVuforia();
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
@@ -96,11 +112,15 @@ public class CraterAuto extends LinearOpMode {
 
         waitForStart(); //the rest of the code begins after the play button is pressed
 
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        unlatch();
+
         sleep(1000);
-
-        //unlatch();
-
-        //sleep(1000);
 
         sample();
 
@@ -109,48 +129,43 @@ public class CraterAuto extends LinearOpMode {
 
     public void goldLeft(){
         leftTurn(34.0f);
-        driveEncoder(3700, 0.5);
-        leftTurn(100.0f);
-        driveEncoder(750, 0.5);
-        leftTurn(20.0f);
-        driveEncoder(2000,0.5);
-        markerArm.setPosition(1);
+        driveEncoder(3000, 0.75);
+        leftTurn(35);
+        driveEncoder(1500, 0.75);
+        leftTurn(62.0f);
+        driveEncoder(5000,0.75);
         sleep(1000);
-        markerArm.setPosition(0);
+        releaseMarker();
         sleep(1000);
-        driveEncoder(-6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(-1000, 1.0);
+        driveEncoder(-6200, 0.75);
     }
 
     public void goldMiddle(){
-        driveEncoder(5000, 0.5);
-        leftTurn(47.5f);
-        driveEncoder(500,0.5);
-        driveEncoder(2750,0.5);
-        markerArm.setPosition(1);
-        sleep(2000);
-        markerArm.setPosition(0);
+        driveEncoder(2500, 0.75);
+        driveEncoder(-1200, 0.75);
+        leftTurn(90.0f);
+        driveEncoder(4500,0.75);
+        leftTurn(42.5f);
+        driveEncoder(1750,0.75);
         sleep(1000);
-        driveEncoder(-6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(1000, 1.0);
+        releaseMarker();
+        sleep(1000);
+        driveEncoder(-4750, 0.75);
     }
 
-    public void goldRight(){
+    public void goldRight() {
         rightTurn(30.0f);
-        driveEncoder(4000, 0.5);
-        leftTurn(75.0f);
-        driveEncoder(2750, 0.5);
-        leftTurn(45.0f);
-        markerArm.setPosition(1);
+        driveEncoder(3000, 0.75);
         sleep(1000);
-        markerArm.setPosition(0);
+        driveEncoder(-1250, 0.75);
+        leftTurn(120.0f);
+        driveEncoder(5000, 0.75);
+        leftTurn(44.0f);
+        driveEncoder(2000, 0.75);
         sleep(1000);
-        leftTurn(45.0f);
-        driveEncoder(6000, 0.5);
-        leftTurn(15.0f);
-        driveEncoder(1250,1.0);
+        releaseMarker();
+        sleep(1000);
+        driveEncoder(-4500, 0.75);
     }
 
     public void driveEncoder(int ticks, double pow){
@@ -178,6 +193,7 @@ public class CraterAuto extends LinearOpMode {
 
         }
 
+
         leftfrontDrive.setPower(0);
         rightfrontDrive.setPower(0);
         leftbackDrive.setPower(0);
@@ -190,18 +206,53 @@ public class CraterAuto extends LinearOpMode {
     }
 
     public void unlatch(){
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lift.setTargetPosition(2000);
-        lift.setPower(1);
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        while(lift.isBusy() && opModeIsActive()) {
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(100);
+        liftBottom.setTargetPosition(100);
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
+        while(liftTop.isBusy() && liftBottom.isBusy() && opModeIsActive()) {
 
         }
 
-        lift.setPower(0);
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
 
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        driveEncoder(200, 0.5);
+
+        liftTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftBottom.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        liftTop.setTargetPosition(-225);
+        liftBottom.setTargetPosition(-225);
+
+        liftTop.setPower(1);
+        liftBottom.setPower(1);
+
+        while(liftTop.isBusy() && liftBottom.isBusy() && opModeIsActive()) {
+
+        }
+
+        liftTop.setPower(0);
+        liftBottom.setPower(0);
+
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        driveEncoder(-300, 0.2);
     }
 
     public void leftTurn (float turnAngle){ //left turn
@@ -247,13 +298,41 @@ public class CraterAuto extends LinearOpMode {
         }
     }
 
+    public void releaseMarker (){
+        armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivator.setTargetPosition(300);
+
+        armActivator.setPower(.25);
+
+        while(armActivator.isBusy()) {
+
+        }
+        armActivator.setPower(0);
+        armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        sleep(500);
+
+        armActivator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armActivator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armActivator.setTargetPosition(-215);
+
+        armActivator.setPower(.25);
+
+        while(armActivator.isBusy()) {
+
+        }
+        armActivator.setPower(0);
+        armActivator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
     public void sample(){
         if (opModeIsActive()) {
             /** Activate Tensor Flow Object Detection. */
             if (tfod != null) {
                 tfod.activate();
             }
-
+            runtime.reset();
             while (opModeIsActive()) {
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
@@ -261,6 +340,10 @@ public class CraterAuto extends LinearOpMode {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
                         telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        if(runtime.milliseconds() >= 3500 && updatedRecognitions.size() != 2 && ranFailSafe == false){
+                            driveEncoder(30, 0.5);
+                            ranFailSafe = true;
+                        }
                         if (updatedRecognitions.size() == 2) {
                             int goldMineralX = -1;
                             int silverMineral1X = -1;
@@ -328,4 +411,3 @@ public class CraterAuto extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 }
-
